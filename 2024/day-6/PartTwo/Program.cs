@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Drawing;
+﻿using System.Drawing;
 
 StreamReader reader = new("../input");
 // StreamReader reader = new("../test-input");
@@ -22,29 +21,29 @@ char[][] grid = reader.ReadToEnd().Split("\n").Select((string s, int i) =>
 
 int result = 0;
 
-List<ValueTuple<int, int>> visited = new();
-Debug.Assert(initialPosition.X != -1);
+List<ValueTuple<int, int, Direction>> visited = new();
 grid[initialPosition.Y][initialPosition.X] = '.';
 
 MapGuardsPositions(grid, initialPosition.Y, initialPosition.X, Direction.Up, ref visited);
 List<ValueTuple<int, int, int>> loopVisited = new();
-foreach (var item in visited)
+ValueTuple<int, int, Direction> previous = new(initialPosition.Y, initialPosition.X, Direction.Up);
+for (int i = 0; i < visited.Count; i++)
 {
+    var item = visited[i];
     if (item.Item1 == initialPosition.Y && item.Item2 == initialPosition.X)
         continue;
     grid[item.Item1][item.Item2] = '#';
-    if (HasLoop(grid, initialPosition.Y, initialPosition.X, Direction.Up, ref loopVisited))
+    if (HasLoop(grid, previous.Item1, previous.Item2, previous.Item3, ref loopVisited))
         result++;
     grid[item.Item1][item.Item2] = '.';
     loopVisited.Clear();
+    previous = (visited[i]);
 }
 
 Console.WriteLine(result);
 
-// Slow but works
 bool HasLoop(char[][] grid, int i, int j, Direction nextDirection, ref List<ValueTuple<int, int, int>> visited)
 {
-    Debug.Assert(i > 0 || j > 0);
     if (grid[i][j] == '.')
     {
         var index = visited.FindIndex(x => x.Item1 == i && x.Item2 == j);
@@ -89,16 +88,12 @@ bool HasLoop(char[][] grid, int i, int j, Direction nextDirection, ref List<Valu
     }
 }
 
-void MapGuardsPositions(char[][] grid, int i, int j, Direction nextDirection, ref List<ValueTuple<int, int>> visited)
+void MapGuardsPositions(char[][] grid, int i, int j, Direction nextDirection, ref List<ValueTuple<int, int, Direction>> visited)
 {
-    Debug.Assert(i > 0 && j > 0);
     if (grid[i][j] == '.')
     {
-        var index = visited.FindIndex(x => x.Item1 == i && x.Item2 == j);
-        if (index == -1)
-        {
-            visited.Add((i, j));
-        }
+        if (!visited.Any(x => x.Item1 == i && x.Item2 == j))
+            visited.Add(new(i, j, nextDirection));
     }
     Func<int, int, (int, int)> move = nextDirection switch
     {
